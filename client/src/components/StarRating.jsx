@@ -9,15 +9,15 @@ export const StarRating = ({
   const [hoverValue, setHoverValue] = useState(0)
 
   const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-5 h-5',
-    lg: 'w-7 h-7',
+    sm: 'w-3.5 h-3.5',
+    md: 'w-4 h-4',
+    lg: 'w-6 h-6',
   }
 
   const activeValue = hoverValue || value
 
   return (
-    <div className="flex items-center gap-1 select-none">
+    <div className="inline-flex items-center gap-0.5 select-none" role="group" aria-label="Rating">
       {[1, 2, 3, 4, 5].map((star) => {
         const isFilled = star <= activeValue
         return (
@@ -28,16 +28,16 @@ export const StarRating = ({
             onClick={() => onChange && onChange(star)}
             onMouseEnter={() => !disabled && setHoverValue(star)}
             onMouseLeave={() => !disabled && setHoverValue(0)}
-            className={`transition-all duration-150 p-0.5 rounded focus:outline-none ${
-              disabled ? 'cursor-default' : 'cursor-pointer hover:scale-110'
+            className={`p-0.5 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-500 transition-transform ${
+              disabled ? 'cursor-default' : 'cursor-pointer hover:scale-105'
             }`}
-            aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+            aria-label={`${star} star${star > 1 ? 's' : ''}`}
           >
             <svg
-              className={`${sizeClasses[size] || sizeClasses.md} transition-all duration-150 ${
+              className={`${sizeClasses[size] || sizeClasses.md} ${
                 isFilled
-                  ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]'
-                  : 'text-slate-300 dark:text-slate-600 fill-transparent hover:text-slate-400'
+                  ? 'text-amber-400 fill-amber-400'
+                  : 'text-slate-300 dark:text-slate-600 fill-transparent'
               }`}
               viewBox="0 0 20 20"
               stroke="currentColor"

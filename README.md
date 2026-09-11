@@ -2,78 +2,232 @@
 
 A modern, full-stack, production-ready Web Application built with **React 19**, **Tailwind CSS**, **Node.js / Express 5**, and **AWS RDS MySQL**. The platform features Role-Based Access Control (RBAC), server-side search, filtering, sorting, pagination, interactive star ratings, dynamic average rating calculation, and a sleek SaaS user interface.
 
-The application is structured to deploy as **ONE single project on Vercel**, hosting both the Vite React SPA frontend and the Express REST API serverless functions on the same domain.
+The application is architected for **single-project Vercel deployment**, serving both the Vite React SPA frontend and the Express REST API serverless functions from the same unified domain.
 
 ---
 
 ## 📋 Table of Contents
+
 1. [Project Description](#-project-description)
-2. [Key Features](#-key-features)
-3. [User Roles & Permissions](#-user-roles--permissions)
-4. [Technology Stack](#-technology-stack)
-5. [Project Architecture](#-project-architecture)
-6. [Database Design](#-database-design)
-7. [API Endpoints](#-api-endpoints)
-8. [Local Development Setup](#-local-development-setup)
-9. [Production Deployment on Vercel](#-production-deployment-on-vercel)
-10. [AWS RDS Networking & Security Group](#-aws-rds-networking--security-group)
-11. [Health Checks](#-health-checks)
-12. [Troubleshooting & FAQ](#-troubleshooting--faq)
-13. [Demo Credentials](#-demo-credentials)
-14. [License](#-license)
+2. [Complete Application Flow](#-complete-application-flow)
+3. [Key Features](#-key-features)
+4. [User Roles & Permissions](#-user-roles--permissions)
+5. [Assessment Validation Rules](#-assessment-validation-rules)
+6. [Technology Stack](#-technology-stack)
+7. [Project Architecture](#-project-architecture)
+8. [Database Design](#-database-design)
+9. [API Endpoints](#-api-endpoints)
+10. [Local Development Setup](#-local-development-setup)
+11. [Production Deployment on Vercel](#-production-deployment-on-vercel)
+12. [AWS RDS Networking & Security](#-aws-rds-networking--security)
+13. [Health Checks & Verification](#-health-checks--verification)
+14. [Troubleshooting & FAQ](#-troubleshooting--faq)
+15. [Demo Credentials](#-demo-credentials)
+16. [License](#-license)
 
 ---
 
 ## 📝 Project Description
 
 The **Store Rating System** is an enterprise-grade platform that connects consumers, store owners, and platform administrators:
-- **Normal Users** can explore registered stores, submit 1–5 star ratings, and manage their ratings.
-- **Store Owners** receive dedicated analytics showing overall rating averages and star distribution breakdowns.
+
+- **Normal Users** can explore registered stores, search and filter by name or address, submit 1–5 star ratings, and modify their feedback.
+- **Store Owners** receive a dedicated dashboard showing real-time store analytics, overall rating averages, rating distributions, and customer feedback.
 - **Administrators** maintain complete control over users, stores, ownership assignment, and platform statistics.
+
+---
+
+## 🔄 Complete Application Flow
+
+### 1. Visitor & Normal User Flow
+
+```text
+Landing Page
+    │
+    ├── Sign In ───────────────┐
+    │                          │
+    └── Register               │
+         │                     │
+         ▼                     │
+   Validate Name/Email/        │
+   Address/Password            │
+         │                     │
+         ▼                     │
+ POST /api/auth/register       │
+         │                     │
+         ▼                     │
+    USER account               │
+         │                     │
+         └──────────► Login ◄──┘
+                          │
+                          ▼
+                   Verify credentials
+                          │
+                          ▼
+                     Issue JWT
+                          │
+                          ▼
+                  role = USER
+                          │
+                          ▼
+                   Store Catalog
+```
+
+### 2. Administrator Flow
+
+```text
+Sign In
+   │
+   ▼
+POST /api/auth/login
+   │
+   ▼
+role = ADMIN
+   │
+   ▼
+Admin Dashboard
+   │
+   ├── View total users
+   ├── View total stores
+   ├── View total ratings
+   │
+   ├── Manage Users
+   │     ├── Create USER
+   │     ├── Create ADMIN
+   │     └── Create STORE_OWNER
+   │
+   ├── Manage Stores
+   │     ├── Create Store
+   │     └── Assign Store Owner
+   │
+   ├── Search / Filter / Sort / Paginate
+   │
+   └── View platform rating information
+```
+
+### 3. Store Owner Flow
+
+```text
+Admin creates STORE_OWNER
+          │
+          ▼
+Assign Store
+          │
+          ▼
+Store Owner uses the SAME login page
+          │
+          ▼
+POST /api/auth/login
+          │
+          ▼
+Backend verifies credentials
+          │
+          ▼
+JWT contains STORE_OWNER role
+          │
+          ▼
+Owner Dashboard
+          │
+          ├── Assigned Store
+          ├── Average Rating
+          ├── Total Ratings
+          ├── Rating Distribution
+          └── Customers Who Rated
+```
+
+### 4. Rating & Real-Time Aggregation Flow
+
+```text
+Normal User
+    │
+    ▼
+Store Catalog
+    │
+    ├── Search by Name / Address
+    ├── Sort by Rating, Name, Date
+    │
+    ▼
+Store Card
+    │
+    ├── Overall Rating = AVG(all submitted user ratings)
+    ├── Your Rating = current user's submitted rating
+    │
+    ▼
+Submit / Modify Rating (1–5 Stars)
+    │
+    ▼
+POST /api/ratings (or PUT /api/ratings/:id)
+    │
+    ▼
+MySQL updates `ratings` table
+    │
+    ▼
+Recalculate SQL aggregate: ROUND(AVG(rating), 2)
+    │
+    ▼
+Instant Store Average Update
+```
 
 ---
 
 ## ✨ Key Features
 
-- 🔐 **Secure Authentication**: JWT-based stateless authentication with bcrypt password hashing (cost factor 10).
-- 🛡️ **Role-Based Access Control (RBAC)**: Strict server-side and client-side access control for `ADMIN`, `STORE_OWNER`, and `USER` roles.
+- 🔐 **Secure JWT Authentication**: Stateless authentication with bcrypt password hashing (10 salt rounds) and HS256 JWT signing.
+- 🛡️ **Role-Based Access Control (RBAC)**: Strict server-side and client-side protection for `ADMIN`, `STORE_OWNER`, and `USER` roles.
 - ⚡ **Server-Side Search, Filter, Sort & Pagination**: SQL-driven query handling using `URLSearchParams` for high performance.
-- ⭐ **Interactive Star Rating Interface**: Users can submit or modify 1–5 star ratings.
-- 🚫 **Duplicate Rating Prevention**: Enforced via MySQL `UNIQUE(user_id, store_id)` key constraints returning `409 Conflict`.
+- ⭐ **Interactive Star Rating Interface**: Users can submit or modify 1–5 star ratings with instant feedback.
+- 🚫 **Duplicate Rating Prevention**: Enforced via MySQL `UNIQUE(user_id, store_id)` constraints with seamless upsert support.
 - 📊 **Dynamic Rating Aggregation**: Server-calculated `ROUND(AVG(rating), 2)` and total count metrics.
-- 🎨 **Modern SaaS UI**: Dark/Light theme built with Tailwind CSS, custom glassmorphism, responsive tables, and micro-interactions.
-- 🔒 **Production Security Hardening**: Strict parameterization against SQL injection, non-leaking error handlers, CORS protection, and secure cookie/token handling.
+- 🎨 **Modern SaaS UI**: Dark/Light theme built with Tailwind CSS, custom glassmorphism, responsive tables, and micro-animations.
+- 🔒 **Production Security Hardening**: Parameterized SQL queries against SQL injection, non-leaking production error handlers, CORS whitelisting, and secure token handling.
 - ☁️ **Single-Project Vercel Deployment**: Unified monorepo deployment with client SPA static build and serverless Express API.
 
 ---
 
 ## 👥 User Roles & Permissions
 
+The application uses **one single authentication system** for all three roles. The backend determines the user's role upon login and the frontend directs the user to their designated dashboard.
+
 | Role | Access & Permissions |
-|---|---|
-| **`ADMIN`** | • Overview system statistics (total users, stores, ratings, role breakdown)<br>• Manage users (search, filter by role, sort, paginate)<br>• Manage stores (create new stores, assign store owners, sort, paginate)<br>• View all platform ratings |
-| **`STORE_OWNER`** | • Dedicated Owner Dashboard displaying assigned store details<br>• Real-time average rating & total rating metrics<br>• 1 to 5 star rating distribution breakdown<br>• Paginated customer ratings table (Customer Name, Email, Rating, Date) |
-| **`USER`** | • Browse store catalog with search, filter, and sort capabilities<br>• Submit a 1–5 star rating for any store<br>• Modify previously submitted ratings<br>• View and update account security settings (Password change) |
+| :--- | :--- |
+| **`ADMIN`** | • View platform statistics (users, stores, ratings)<br>• Create users, administrators, and store owners<br>• Create and manage stores<br>• Assign stores to store owners<br>• Search, filter, sort, and paginate user and store listings<br>• View user details with store-owner rating information<br>• Sign out |
+| **`STORE_OWNER`** | • Log in through the unified authentication portal<br>• Access assigned store's dashboard and analytics<br>• View store average rating and total review counts<br>• View list of customers who rated their store<br>• View rating distribution (1–5 star breakdown)<br>• Change password<br>• Sign out |
+| **`USER`** | • Public user registration and login<br>• Browse all registered stores<br>• Search stores by name or address<br>• View overall store rating and personal submitted rating<br>• Submit a 1–5 star rating<br>• Modify previously submitted rating<br>• Change password<br>• Sign out |
+
+---
+
+## ✅ Assessment Validation Rules
+
+The following rules are strictly enforced across both client and server:
+
+| Field | Rule | Validation Description |
+| :--- | :--- | :--- |
+| **User Name** | 20–60 characters | Required for user registration and user creation |
+| **Store Name** | 1–60 characters | Required for store creation |
+| **Address** | Maximum 400 characters | Optional for user; required for stores |
+| **Password** | 8–16 characters | Requires at least 1 uppercase letter and at least 1 special character |
+| **Email** | Standard email regex | Must be a valid email format and unique in database |
+| **Rating** | Integer 1–5 | Enforced via SQL `CHECK` constraint and backend validation |
 
 ---
 
 ## 💻 Technology Stack
 
-### **Frontend**
+### Frontend
 - **Framework**: React 19 SPA
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS v4
 - **State Management**: React Context API (`AuthContext`, `ThemeContext`)
 - **HTTP Client**: Native `fetch()` API with configurable base URL
 
-### **Backend**
+### Backend
 - **Runtime**: Node.js (ES Modules, Node 20+)
 - **Framework**: Express 5
 - **Database Driver**: `mysql2/promise` with connection pooling & keepalive
 - **Security**: `bcrypt` (password hashing), `jsonwebtoken` (JWT tokens), `cors`
 
-### **Database & Hosting**
-- **Database**: AWS RDS MySQL 8.0+ (`store-rating-db.cxsaewym2tpp.eu-north-1.rds.amazonaws.com`)
+### Database & Hosting
+- **Database**: AWS RDS MySQL 8.0+
 - **Deployment**: Vercel (Unified Frontend + Serverless API)
 
 ---
@@ -108,7 +262,7 @@ store-rating-system/
 ├── vercel.json                  # Vercel build & route rewrite configuration
 ├── .gitignore                   # Workspace gitignore rules
 ├── .env.example                 # Environment variables template
-└── README.md                    # Documentation
+└── README.md                    # Project Documentation
 ```
 
 ---
@@ -156,36 +310,36 @@ erDiagram
 
 ## 🔌 API Endpoints
 
-### **System & Health**
+### System & Health
 - `GET /api/health` — Basic server liveness check
 - `GET /api/health/db` — AWS RDS MySQL database connectivity test (`SELECT 1`)
 
-### **Authentication (`/api/auth`)**
+### Authentication (`/api/auth`)
 - `POST /api/auth/register` — Register a new normal user account
 - `POST /api/auth/login` — Authenticate and receive JWT token
 - `GET /api/auth/me` — Fetch authenticated user profile details
 - `POST /api/auth/change-password` — Update user password
 
-### **Store Operations (`/api/stores`)**
+### Store Operations (`/api/stores`)
 - `GET /api/stores` — Get paginated stores with search, sort, and user ratings
 - `GET /api/stores/:id` — Get detailed store info and average ratings
 - `POST /api/stores` — Create a new store (*ADMIN only*)
 - `PUT /api/stores/:id` — Update store details (*ADMIN or assigned STORE_OWNER*)
 - `DELETE /api/stores/:id` — Delete a store (*ADMIN only*)
 
-### **Rating Operations (`/api/ratings`)**
-- `POST /api/ratings` — Submit a rating (*USER only*)
+### Rating Operations (`/api/ratings`)
+- `POST /api/ratings` — Submit or modify a rating (*USER only*)
 - `GET /api/ratings/:storeId` — Get all ratings for a store
 - `PUT /api/ratings/:id` — Modify an existing rating (*Owner of rating only*)
 - `DELETE /api/ratings/:id` — Delete a rating (*Owner of rating or ADMIN*)
 
-### **Admin Operations (`/api/admin`)**
+### Admin Operations (`/api/admin`)
 - `GET /api/admin/dashboard` — Platform overview statistics (*ADMIN only*)
 - `GET /api/admin/users` — Paginated user management list (*ADMIN only*)
 - `GET /api/admin/stores` — Paginated store management list (*ADMIN only*)
 - `GET /api/admin/ratings` — Paginated system rating logs (*ADMIN only*)
 
-### **Owner Operations (`/api/owner`)**
+### Owner Operations (`/api/owner`)
 - `GET /api/owner/dashboard` — Store owner statistics & rating distribution (*STORE_OWNER only*)
 - `GET /api/owner/ratings` — Paginated customer ratings table (*STORE_OWNER only*)
 
@@ -193,12 +347,12 @@ erDiagram
 
 ## ⚙️ Local Development Setup
 
-### **1. Prerequisites**
-- **Node.js**: v18.0.0 or higher
+### 1. Prerequisites
+- **Node.js**: v18.0.0 or higher (Node 20+ recommended)
 - **npm**: v9.0.0 or higher
-- **MySQL Server** (local) or access to **AWS RDS MySQL**
+- **MySQL Server** (local) or **AWS RDS MySQL**
 
-### **2. Install Dependencies**
+### 2. Install Dependencies
 ```bash
 # Install root dependencies
 npm install
@@ -207,28 +361,37 @@ npm install
 npm install --prefix client
 ```
 
-### **3. Configure Environment Variables**
-Create `.env` in the root directory (or `server/.env`):
+### 3. Configure Environment Variables
+Create a `.env` file in the `server` directory (or repository root):
+
 ```env
-DB_HOST=store-rating-db.cxsaewym2tpp.eu-north-1.rds.amazonaws.com
+DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=store_rating_db
-DB_USER=admin
-DB_PASSWORD=your_database_password
-JWT_SECRET=your_secure_jwt_secret_key
+DB_USER=root
+DB_PASSWORD=your_password
+DB_SSL=false
+JWT_SECRET=your_jwt_secret_key_minimum_32_characters
 NODE_ENV=development
 PORT=5000
 VITE_API_URL=/api
 ```
 
-### **4. Start Local Development Servers**
-In terminal 1 (Backend API):
+### 4. Database Setup & Seeding
+Execute `database/schema.sql` in your MySQL database to create tables and seed demo accounts:
+
+```bash
+mysql -u root -p store_rating_db < database/schema.sql
+```
+
+### 5. Start Local Development Servers
+In Terminal 1 (Backend API):
 ```bash
 npm run server:dev
 # Running on http://localhost:5000
 ```
 
-In terminal 2 (Frontend Client):
+In Terminal 2 (Frontend Client):
 ```bash
 npm run client:dev
 # Running on http://localhost:5173
@@ -238,76 +401,68 @@ npm run client:dev
 
 ## 🚀 Production Deployment on Vercel
 
-The repository is pre-configured for a **single unified Vercel deployment** via `vercel.json` and `api/index.js`.
+The repository is configured for a **single unified Vercel project** via `vercel.json` and `api/index.js`.
 
-### **Step-by-Step Vercel Deployment:**
+### Deployment Steps:
 
 1. **Push Changes to GitHub**:
    ```bash
    git add .
-   git commit -m "Configure full-stack single project deployment for Vercel"
+   git commit -m "Deploy Store Rating System to Vercel"
    git push origin main
    ```
 
 2. **Open Vercel Dashboard**:
    - Go to [vercel.com/dashboard](https://vercel.com/dashboard)
-   - Click **"Add New..."** > **"Project"**
-   - Select and import your GitHub repository (`store-rating-system`).
+   - Click **Add New...** > **Project**
+   - Import your GitHub repository (`store-rating-system`).
 
 3. **Project Settings**:
    - **Root Directory**: `./` (Leave as repository root)
    - **Framework Preset**: `Vite` (or `Other`)
-   - **Build Command**: `npm run build --prefix client` (automatically picked from `vercel.json`)
-   - **Output Directory**: `client/dist` (automatically picked from `vercel.json`)
-   - **Install Command**: `npm install && npm install --prefix client` (automatically picked from `vercel.json`)
+   - **Build Command**: `npm run build --prefix client` (picked from `vercel.json`)
+   - **Output Directory**: `client/dist` (picked from `vercel.json`)
+   - **Install Command**: `npm install && npm install --prefix client` (picked from `vercel.json`)
 
-4. **Add Environment Variables in Vercel**:
-   In the Vercel **Environment Variables** section, add the following:
+4. **Set Environment Variables in Vercel**:
+   In Project Settings > Environment Variables, add:
 
-   | Variable Name | Example / Expected Value | Description |
-   |---|---|---|
-   | `DB_HOST` | `store-rating-db.cxsaewym2tpp.eu-north-1.rds.amazonaws.com` | AWS RDS MySQL endpoint |
-   | `DB_PORT` | `3306` | MySQL port |
-   | `DB_NAME` | `store_rating_db` | Database name |
-   | `DB_USER` | `admin` | Database username |
-   | `DB_PASSWORD` | `<your-rds-password>` | AWS RDS master password |
-   | `JWT_SECRET` | `<your-random-64-character-secret>` | Strong production JWT secret |
-   | `NODE_ENV` | `production` | Production mode |
-   | `VITE_API_URL` | `/api` | Relative same-origin API path |
+   | Variable Name | Description |
+   | :--- | :--- |
+   | `DB_HOST` | AWS RDS MySQL endpoint hostname |
+   | `DB_PORT` | `3306` |
+   | `DB_NAME` | `store_rating_db` |
+   | `DB_USER` | AWS RDS master username |
+   | `DB_PASSWORD` | AWS RDS master password |
+   | `DB_SSL` | `true` |
+   | `JWT_SECRET` | Strong random 64-character secret key |
+   | `NODE_ENV` | `production` |
+   | `VITE_API_URL` | `/api` |
 
 5. **Deploy**:
-   - Click **Deploy**.
-   - Vercel will build the frontend assets into `client/dist` and bundle `/api/index.js` as the serverless function.
-
-6. **Verify Deployment**:
-   - Visit `https://<your-project>.vercel.app/api/health` — Should return `{ "status": "ok", "success": true }`.
-   - Visit `https://<your-project>.vercel.app/api/health/db` — Should return `{ "status": "ok", "database": "connected" }`.
-   - Open `https://<your-project>.vercel.app/` in your browser to test login, ratings, and dashboard views.
+   Click **Deploy**. Vercel will build the frontend SPA into `client/dist` and bundle `/api/index.js` as the serverless function.
 
 ---
 
-## 🌐 AWS RDS Networking & Security Group
+## 🌐 AWS RDS Networking & Security
 
 > [!IMPORTANT]
-> **Why RDS Inbound Rule Configuration is Required**:
-> Vercel Serverless Functions run across AWS regional compute clusters with dynamic outbound IP addresses. If your RDS Security Group is currently restricted to only your personal home/office IP address, Vercel functions will not be able to connect to the database.
+> **RDS Security Group Configuration**:
+> Vercel Serverless Functions run across AWS regional compute clusters with dynamic outbound IP addresses. For serverless functions to connect to your AWS RDS database, the RDS Security Group must allow inbound traffic on port 3306.
 
-### **How to Configure RDS Inbound Access:**
-1. Open the **AWS Management Console** and navigate to **Amazon RDS** > **Databases**.
-2. Select `store-rating-db`.
-3. Under **Connectivity & security**, click the link under **VPC security groups**.
-4. In the Security Group details page:
-   - Click **Edit inbound rules**.
-   - Add a rule:
-     - **Type**: `MySQL/Aurora` (Port `3306`)
-     - **Source**: `Custom` > `0.0.0.0/0` (Anywhere IPv4)
-     - **Description**: `Allow inbound MySQL for Vercel serverless API`
-   - Click **Save rules**.
-5. Ensure the RDS instance has **Publicly Accessible: Yes** (under connectivity configuration) so that external serverless functions can resolve its DNS endpoint.
+### Recommended Configuration:
+1. Open the **AWS Management Console** > **Amazon RDS** > **Databases**.
+2. Select your database instance (`store-rating-db`).
+3. Under **Connectivity & security**, click the active **VPC security groups** link.
+4. Click **Edit inbound rules** and add:
+   - **Type**: `MySQL/Aurora` (Port `3306`)
+   - **Source**: `Custom` > `0.0.0.0/0` (Anywhere IPv4)
+   - **Description**: `Allow inbound MySQL for Vercel serverless functions`
+5. Ensure the RDS instance has **Publicly Accessible: Yes** enabled.
 
 ---
 
-## 🩺 Health Checks
+## 🩺 Health Checks & Verification
 
 You can monitor and verify connectivity at any time:
 
@@ -315,12 +470,13 @@ You can monitor and verify connectivity at any time:
   ```http
   GET https://<your-project>.vercel.app/api/health
   ```
-  Response:
+  *Response:*
   ```json
   {
     "status": "ok",
     "success": true,
-    "message": "Store Rating API is healthy and running"
+    "message": "Store Rating API is healthy and running",
+    "timestamp": "2026-09-11T12:00:00.000Z"
   }
   ```
 
@@ -328,7 +484,7 @@ You can monitor and verify connectivity at any time:
   ```http
   GET https://<your-project>.vercel.app/api/health/db
   ```
-  Response:
+  *Response:*
   ```json
   {
     "status": "ok",
@@ -338,35 +494,19 @@ You can monitor and verify connectivity at any time:
   }
   ```
 
----
 
-## ❓ Troubleshooting & FAQ
-
-### 1. Database Connection Timeout (`ETIMEDOUT` / `ECONNREFUSED`)
-- **Cause**: The AWS RDS Security Group is blocking incoming connections from Vercel.
-- **Fix**: Verify that port `3306` is open to `0.0.0.0/0` in the RDS VPC Security Group, and that **Publicly Accessible** is enabled on the RDS instance.
-
-### 2. Direct URL Refresh Returns 404 (e.g., `/dashboard` or `/login`)
-- **Cause**: SPA routing rewrite rule missing.
-- **Fix**: Handled automatically in `vercel.json` via the catch-all rewrite rule (`/(.*)` -> `/index.html`).
-
-### 3. API Requests Return HTML instead of JSON
-- **Cause**: `/api/*` requests being caught by the SPA rewrite rule.
-- **Fix**: Handled automatically in `vercel.json` because `/api/(.*)` -> `/api/index.js` is placed before `/(.*)` -> `/index.html`.
-
----
 
 ## 👤 Demo Credentials
 
-The seeded database contains the following test accounts (all default passwords: `Password123!`):
+The database seed script provides test accounts for immediate evaluation (all default passwords: `Password123!`):
 
-| Role | Email | Password | Access |
-|---|---|---|---|
-| **Admin** | `admin@storerating.com` | `Password123!` | Admin Dashboard, User & Store Management |
-| **Store Owner** | `carlos@apextech.com` | `Password123!` | Owner Dashboard, Store Analytics |
-| **Store Owner** | `elena@urbanroast.com` | `Password123!` | Owner Dashboard, Store Analytics |
-| **Normal User** | `alice@example.com` | `Password123!` | Store Catalog, Rating Submission, Profile |
-| **Normal User** | `bob@example.com` | `Password123!` | Store Catalog, Rating Submission, Profile |
+| Role | Email | Password | Access Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@storerating.com` | `Password123!` | Admin Dashboard, User Management, Store Creation |
+| **Store Owner** | `carlos@apextech.com` | `Password123!` | Owner Dashboard, Store Analytics & Reviews |
+| **Store Owner** | `elena@urbanroast.com` | `Password123!` | Owner Dashboard, Store Analytics & Reviews |
+| **Normal User** | `alice@example.com` | `Password123!` | Store Catalog, Submit/Modify Ratings, Profile |
+| **Normal User** | `bob@example.com` | `Password123!` | Store Catalog, Submit/Modify Ratings, Profile |
 
 ---
 

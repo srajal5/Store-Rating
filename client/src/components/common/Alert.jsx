@@ -9,24 +9,24 @@ const iconPaths = {
 
 const styles = {
   error: {
-    bg: 'bg-rose-500/8 border-rose-500/25',
-    text: 'text-rose-300',
-    icon: 'text-rose-400',
+    bg: 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50',
+    text: 'text-rose-800 dark:text-rose-300',
+    icon: 'text-rose-600 dark:text-rose-400',
   },
   success: {
-    bg: 'bg-emerald-500/8 border-emerald-500/25',
-    text: 'text-emerald-300',
-    icon: 'text-emerald-400',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50',
+    text: 'text-emerald-800 dark:text-emerald-300',
+    icon: 'text-emerald-600 dark:text-emerald-400',
   },
   warning: {
-    bg: 'bg-amber-500/8 border-amber-500/25',
-    text: 'text-amber-300',
-    icon: 'text-amber-400',
+    bg: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50',
+    text: 'text-amber-800 dark:text-amber-300',
+    icon: 'text-amber-600 dark:text-amber-400',
   },
   info: {
-    bg: 'bg-sky-500/8 border-sky-500/25',
-    text: 'text-sky-300',
-    icon: 'text-sky-400',
+    bg: 'bg-sky-50 dark:bg-sky-950/30 border-sky-200 dark:border-sky-900/50',
+    text: 'text-sky-800 dark:text-sky-300',
+    icon: 'text-sky-600 dark:text-sky-400',
   },
 }
 
@@ -37,9 +37,9 @@ export const Alert = ({ type = 'error', message, onClose }) => {
   const iconPath = iconPaths[type] || iconPaths.error
 
   return (
-    <div className={`p-3.5 rounded-xl border text-sm flex items-start justify-between gap-3 mb-4 ${style.bg} ${style.text}`}>
+    <div className={`p-3.5 rounded-lg border text-xs font-medium flex items-start justify-between gap-3 ${style.bg} ${style.text}`}>
       <div className="flex items-start gap-2.5">
-        <svg className={`w-5 h-5 shrink-0 mt-0.5 ${style.icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className={`w-4 h-4 shrink-0 mt-0.5 ${style.icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={iconPath} />
         </svg>
         <span className="leading-relaxed">{message}</span>
@@ -47,8 +47,8 @@ export const Alert = ({ type = 'error', message, onClose }) => {
       {onClose && (
         <button
           onClick={onClose}
-          className="text-current opacity-50 hover:opacity-100 p-0.5 transition-opacity shrink-0 cursor-pointer"
-          aria-label="Dismiss"
+          className="text-current opacity-60 hover:opacity-100 p-0.5 transition-opacity shrink-0 cursor-pointer"
+          aria-label="Dismiss alert"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
