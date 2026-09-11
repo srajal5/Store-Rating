@@ -12,7 +12,6 @@ export const UserStores = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // Query parameters
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('name')
   const [sortOrder, setSortOrder] = useState('ASC')
@@ -20,7 +19,6 @@ export const UserStores = () => {
   const [limit] = useState(9)
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 })
 
-  // Modal / rating submission state
   const [selectedStore, setSelectedStore] = useState(null)
   const [ratingValue, setRatingValue] = useState(0)
   const [submitError, setSubmitError] = useState('')
@@ -38,8 +36,8 @@ export const UserStores = () => {
         page,
         limit,
       })
-      setStores(res.stores)
-      setPagination(res.pagination)
+      setStores(res.stores || [])
+      setPagination(res.pagination || { total: 0, totalPages: 1 })
     } catch (err) {
       setError(err.message || 'Failed to load stores list')
     } finally {
@@ -80,7 +78,7 @@ export const UserStores = () => {
       setTimeout(() => {
         setSelectedStore(null)
         setSubmitSuccess('')
-      }, 1200)
+      }, 1000)
     } catch (err) {
       setSubmitError(err.message || 'Failed to submit rating')
     } finally {
@@ -90,7 +88,6 @@ export const UserStores = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-5">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Explore Stores</h1>
@@ -103,9 +100,7 @@ export const UserStores = () => {
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-      {/* Search & Sort Controls */}
       <div className="p-4 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-sm dark:shadow-xl backdrop-blur-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        {/* Search */}
         <div className="relative flex-1">
           <svg className="w-4 h-4 text-slate-500 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -122,7 +117,6 @@ export const UserStores = () => {
           />
         </div>
 
-        {/* Sort selector */}
         <div className="flex items-center gap-3">
           <select
             value={`${sortBy}-${sortOrder}`}
@@ -138,14 +132,13 @@ export const UserStores = () => {
             <option value="name-DESC">Name (Z-A)</option>
             <option value="email-ASC">Email (A-Z)</option>
             <option value="address-ASC">Address (A-Z)</option>
-            <option value="rating-DESC">Highest Rating</option>
-            <option value="rating-ASC">Lowest Rating</option>
+            <option value="average_rating-DESC">Highest Rating</option>
+            <option value="average_rating-ASC">Lowest Rating</option>
             <option value="created_at-DESC">Newest Stores</option>
           </select>
         </div>
       </div>
 
-      {/* Stores Grid Card Display */}
       {loading ? (
         <Loading text="Loading available stores..." />
       ) : stores.length === 0 ? (
@@ -159,7 +152,9 @@ export const UserStores = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {stores.map((s) => {
-            const overallRating = parseFloat(s.overall_rating || 0)
+            const rawRating = s.overall_rating ?? s.average_rating ?? s.rating ?? 0
+            const overallRating = parseFloat(rawRating)
+            const totalRatings = Number(s.total_ratings || 0)
             const hasUserRated = s.user_rating !== null && s.user_rating !== undefined
 
             return (
@@ -168,7 +163,6 @@ export const UserStores = () => {
                 className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm dark:shadow-xl backdrop-blur-md flex flex-col justify-between hover:border-slate-700/80 transition-all duration-300 group hover:-translate-y-0.5"
               >
                 <div>
-                  {/* Store Card Header */}
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-black text-sm shadow-inner shrink-0 group-hover:bg-indigo-600/30 transition-colors">
@@ -188,7 +182,6 @@ export const UserStores = () => {
                     </div>
                   </div>
 
-                  {/* Address */}
                   <p className="text-xs text-slate-600 dark:text-slate-400 mb-5 flex items-start gap-1.5 line-clamp-2 leading-relaxed p-2.5 rounded-xl border border-slate-200 dark:border-slate-800/50">
                     <svg className="w-3.5 h-3.5 text-slate-500 dark:text-slate-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -197,14 +190,13 @@ export const UserStores = () => {
                     <span>{s.address}</span>
                   </p>
 
-                  {/* Rating Info Box */}
                   <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-2.5 mb-5">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Overall Rating</span>
                       <div className="flex items-center gap-1.5">
                         <StarRating value={Math.round(overallRating)} disabled size="sm" />
                         <span className="font-mono text-xs font-bold text-amber-400">
-                          {overallRating > 0 ? overallRating.toFixed(1) : 'N/A'}
+                          {totalRatings > 0 && overallRating > 0 ? overallRating.toFixed(1) : 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -225,7 +217,6 @@ export const UserStores = () => {
                   </div>
                 </div>
 
-                {/* Action Button */}
                 <Button
                   variant={hasUserRated ? 'secondary' : 'primary'}
                   size="md"
@@ -240,26 +231,25 @@ export const UserStores = () => {
         </div>
       )}
 
-      {/* Pagination Footer */}
       {pagination.totalPages > 1 && (
         <div className="p-4 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-sm dark:shadow-xl backdrop-blur-md flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
           <div>
-            Page <span className="font-semibold text-white">{page}</span> of{' '}
-            <span className="font-semibold text-white">{pagination.totalPages}</span>
+            Page <span className="font-semibold text-slate-900 dark:text-white">{page}</span> of{' '}
+            <span className="font-semibold text-slate-900 dark:text-white">{pagination.totalPages}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 text-slate-900 dark:text-slate-200 rounded-lg transition-all cursor-pointer"
+              className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 rounded-lg transition-all cursor-pointer"
             >
               Previous
             </button>
             <button
               disabled={page >= pagination.totalPages}
               onClick={() => setPage(page + 1)}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 text-slate-900 dark:text-slate-200 rounded-lg transition-all cursor-pointer"
+              className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 rounded-lg transition-all cursor-pointer"
             >
               Next
             </button>
@@ -267,7 +257,6 @@ export const UserStores = () => {
         </div>
       )}
 
-      {/* Submit / Modify Rating Modal */}
       <Modal
         isOpen={!!selectedStore}
         onClose={() => setSelectedStore(null)}

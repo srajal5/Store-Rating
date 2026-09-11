@@ -68,17 +68,19 @@ export const getAdminUsers = async (req, res) => {
     const offset = (pageNum - 1) * limitNum
 
     const allowedSortMap = {
-      id: 'id',
-      name: 'name',
-      email: 'email',
-      address: 'address',
-      role: 'role',
-      created_at: 'created_at',
-      updated_at: 'updated_at',
+      id: 'u.id',
+      name: 'u.name',
+      email: 'u.email',
+      address: 'u.address',
+      role: 'u.role',
+      rating: 'store_rating',
+      store_rating: 'store_rating',
+      created_at: 'u.created_at',
+      updated_at: 'u.updated_at',
     }
 
     const lowerSortBy = typeof sortBy === 'string' ? sortBy.toLowerCase() : ''
-    const safeSortBy = allowedSortMap[lowerSortBy] || allowedSortMap[sortBy] || 'created_at'
+    const safeSortBy = allowedSortMap[lowerSortBy] || allowedSortMap[sortBy] || 'u.created_at'
     const safeSortOrder = (typeof sortOrder === 'string' && sortOrder.toUpperCase() === 'ASC') ? 'ASC' : 'DESC'
 
     let whereClauses = []
@@ -86,42 +88,55 @@ export const getAdminUsers = async (req, res) => {
 
     if (search && typeof search === 'string' && search.trim() !== '') {
       const searchPattern = `%${search.trim()}%`
-      whereClauses.push('(name LIKE ? OR email LIKE ? OR address LIKE ?)')
+      whereClauses.push('(u.name LIKE ? OR u.email LIKE ? OR u.address LIKE ?)')
       queryParams.push(searchPattern, searchPattern, searchPattern)
     }
 
     if (role && typeof role === 'string' && ['ADMIN', 'USER', 'STORE_OWNER'].includes(role.toUpperCase())) {
-      whereClauses.push('role = ?')
+      whereClauses.push('u.role = ?')
       queryParams.push(role.toUpperCase())
     }
 
     if (name && typeof name === 'string' && name.trim() !== '') {
-      whereClauses.push('name LIKE ?')
+      whereClauses.push('u.name LIKE ?')
       queryParams.push(`%${name.trim()}%`)
     }
 
     if (email && typeof email === 'string' && email.trim() !== '') {
-      whereClauses.push('email LIKE ?')
+      whereClauses.push('u.email LIKE ?')
       queryParams.push(`%${email.trim()}%`)
     }
 
     if (address && typeof address === 'string' && address.trim() !== '') {
-      whereClauses.push('address LIKE ?')
+      whereClauses.push('u.address LIKE ?')
       queryParams.push(`%${address.trim()}%`)
     }
 
     const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
 
-    const countQuery = `SELECT COUNT(*) AS total FROM users ${whereSQL}`
+    const countQuery = `SELECT COUNT(DISTINCT u.id) AS total FROM users u ${whereSQL}`
     const [countRows] = await pool.query(countQuery, queryParams)
     const total = countRows[0].total
     const totalPages = Math.ceil(total / limitNum) || 1
 
-    // Exclude password field
     const dataQuery = `
-      SELECT id, name, email, address, role, created_at, updated_at 
-      FROM users 
-      ${whereSQL} 
+      SELECT 
+        u.id, 
+        u.name, 
+        u.email, 
+        u.address, 
+        u.role, 
+        u.created_at, 
+        u.updated_at,
+        s.id AS store_id,
+        s.name AS store_name,
+        COALESCE(ROUND(AVG(r.rating), 2), 0) AS store_rating,
+        COUNT(r.id) AS store_total_ratings
+      FROM users u
+      LEFT JOIN stores s ON s.owner_id = u.id
+      LEFT JOIN ratings r ON r.store_id = s.id
+      ${whereSQL}
+      GROUP BY u.id, s.id
       ORDER BY ${safeSortBy} ${safeSortOrder} 
       LIMIT ? OFFSET ?
     `

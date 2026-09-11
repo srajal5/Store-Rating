@@ -76,3 +76,32 @@ export const getAdminStores = async (params = {}) => {
   }
   return data
 }
+
+export const createAdminUser = async (userData) => {
+  const response = await fetch(`${API_BASE}/users`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(userData),
+  })
+
+  const data = await response.json()
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to create user')
+  }
+  return data.user
+}
+
+export const createAdminStore = async (storeData) => {
+  const response = await fetch(`${API_BASE}/stores`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(storeData),
+  })
+
+  const data = await response.json()
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to create store')
+  }
+  return data.store
+}
+

@@ -1,15 +1,10 @@
 import pool from '../config/db.js'
 
-/**
- * POST /api/ratings
- * Submit a rating for a store (Normal USER only)
- */
 export const createRating = async (req, res) => {
   try {
     const { store_id, rating } = req.body
     const userId = req.user.id
 
-    // Check user role - only normal users can submit ratings
     if (req.user.role !== 'USER') {
       return res.status(403).json({
         success: false,
@@ -33,7 +28,6 @@ export const createRating = async (req, res) => {
       })
     }
 
-    // Check if the store exists
     const [stores] = await pool.query('SELECT id, name FROM stores WHERE id = ?', [parsedStoreId])
     if (stores.length === 0) {
       return res.status(404).json({
@@ -42,32 +36,37 @@ export const createRating = async (req, res) => {
       })
     }
 
-    // Insert rating into database (enforcing UNIQUE constraint on user_id + store_id)
-    const [result] = await pool.query(
-      'INSERT INTO ratings (user_id, store_id, rating) VALUES (?, ?, ?)',
-      [userId, parsedStoreId, parsedRating]
+    const [existing] = await pool.query(
+      'SELECT id FROM ratings WHERE user_id = ? AND store_id = ?',
+      [userId, parsedStoreId]
     )
 
-    // Fetch created rating record
-    const [newRating] = await pool.query(
-      'SELECT id, user_id, store_id, rating, created_at, updated_at FROM ratings WHERE id = ?',
-      [result.insertId]
-    )
+    let ratingId
+    let isUpdated = false
 
-    res.status(201).json({
-      success: true,
-      message: 'Rating submitted successfully.',
-      rating: newRating[0],
-    })
-  } catch (error) {
-    // Handle MySQL UNIQUE constraint violation (duplicate user_id + store_id)
-    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
-      return res.status(409).json({
-        success: false,
-        message: 'You have already submitted a rating for this store. Please modify your existing rating instead.',
-      })
+    if (existing.length > 0) {
+      ratingId = existing[0].id
+      await pool.query('UPDATE ratings SET rating = ? WHERE id = ?', [parsedRating, ratingId])
+      isUpdated = true
+    } else {
+      const [result] = await pool.query(
+        'INSERT INTO ratings (user_id, store_id, rating) VALUES (?, ?, ?)',
+        [userId, parsedStoreId, parsedRating]
+      )
+      ratingId = result.insertId
     }
 
+    const [savedRating] = await pool.query(
+      'SELECT id, user_id, store_id, rating, created_at, updated_at FROM ratings WHERE id = ?',
+      [ratingId]
+    )
+
+    res.status(isUpdated ? 200 : 201).json({
+      success: true,
+      message: isUpdated ? 'Rating updated successfully.' : 'Rating submitted successfully.',
+      rating: savedRating[0],
+    })
+  } catch (error) {
     console.error('Create rating error:', error)
     res.status(500).json({
       success: false,
@@ -76,10 +75,6 @@ export const createRating = async (req, res) => {
   }
 }
 
-/**
- * GET /api/ratings/:storeId
- * Get all ratings and aggregated stats for a store.
- */
 export const getStoreRatings = async (req, res) => {
   try {
     const storeId = parseInt(req.params.storeId, 10)
@@ -90,7 +85,6 @@ export const getStoreRatings = async (req, res) => {
       })
     }
 
-    // Verify store exists
     const [stores] = await pool.query('SELECT id, name FROM stores WHERE id = ?', [storeId])
     if (stores.length === 0) {
       return res.status(404).json({
@@ -99,7 +93,6 @@ export const getStoreRatings = async (req, res) => {
       })
     }
 
-    // Fetch ratings with user details
     const ratingsQuery = `
       SELECT 
         r.id,
@@ -117,7 +110,6 @@ export const getStoreRatings = async (req, res) => {
     `
     const [ratings] = await pool.query(ratingsQuery, [storeId])
 
-    // Calculate SQL-aggregated average and count
     const statsQuery = `
       SELECT 
         COALESCE(ROUND(AVG(rating), 2), 0) AS average_rating,
@@ -127,7 +119,6 @@ export const getStoreRatings = async (req, res) => {
     `
     const [statsRows] = await pool.query(statsQuery, [storeId])
 
-    // Find authenticated user's submitted rating if logged in
     let userRating = null
     if (req.user) {
       const userRatingMatch = ratings.find((r) => r.user_id === req.user.id)
@@ -155,10 +146,6 @@ export const getStoreRatings = async (req, res) => {
   }
 }
 
-/**
- * PUT /api/ratings/:id
- * Modify an existing rating (Owner of rating only)
- */
 export const updateRating = async (req, res) => {
   try {
     const ratingId = parseInt(req.params.id, 10)
@@ -178,7 +165,6 @@ export const updateRating = async (req, res) => {
       })
     }
 
-    // Fetch existing rating
     const [existing] = await pool.query('SELECT * FROM ratings WHERE id = ?', [ratingId])
     if (existing.length === 0) {
       return res.status(404).json({
@@ -189,7 +175,6 @@ export const updateRating = async (req, res) => {
 
     const currentRating = existing[0]
 
-    // Verify ownership: user can only modify their own rating
     if (currentRating.user_id !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -197,10 +182,8 @@ export const updateRating = async (req, res) => {
       })
     }
 
-    // Update rating
     await pool.query('UPDATE ratings SET rating = ? WHERE id = ?', [parsedRating, ratingId])
 
-    // Fetch updated rating
     const [updated] = await pool.query('SELECT * FROM ratings WHERE id = ?', [ratingId])
 
     res.json({
@@ -217,10 +200,6 @@ export const updateRating = async (req, res) => {
   }
 }
 
-/**
- * DELETE /api/ratings/:id
- * Delete a rating (Owner of rating or ADMIN)
- */
 export const deleteRating = async (req, res) => {
   try {
     const ratingId = parseInt(req.params.id, 10)
@@ -231,7 +210,6 @@ export const deleteRating = async (req, res) => {
       })
     }
 
-    // Fetch existing rating
     const [existing] = await pool.query('SELECT * FROM ratings WHERE id = ?', [ratingId])
     if (existing.length === 0) {
       return res.status(404).json({
@@ -251,7 +229,6 @@ export const deleteRating = async (req, res) => {
       })
     }
 
-    // Delete rating record
     await pool.query('DELETE FROM ratings WHERE id = ?', [ratingId])
 
     res.json({

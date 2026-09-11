@@ -1,16 +1,11 @@
 import pool from '../config/db.js'
 
-// Helper function to validate email format
 const validateEmail = (email) => {
   if (typeof email !== 'string') return false
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email)
 }
 
-/**
- * GET /api/stores
- * List all stores with SQL aggregated average ratings, total ratings, search, sorting, and pagination.
- */
 export const getStores = async (req, res) => {
   try {
     const {
@@ -25,12 +20,10 @@ export const getStores = async (req, res) => {
       limit = 10,
     } = req.query
 
-    // Parse and sanitize pagination
     const pageNum = Math.max(1, parseInt(page, 10) || 1)
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10))
     const offset = (pageNum - 1) * limitNum
 
-    // Whitelist allowed sort columns
     const allowedSortMap = {
       id: 's.id',
       name: 's.name',
@@ -39,6 +32,7 @@ export const getStores = async (req, res) => {
       owner_id: 's.owner_id',
       rating: 'average_rating',
       average_rating: 'average_rating',
+      overall_rating: 'average_rating',
       total_ratings: 'total_ratings',
       created_at: 's.created_at',
       updated_at: 's.updated_at',
@@ -82,7 +76,6 @@ export const getStores = async (req, res) => {
 
     const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
 
-    // Count total matching stores
     const countQuery = `
       SELECT COUNT(DISTINCT s.id) AS total 
       FROM stores s 
@@ -94,7 +87,6 @@ export const getStores = async (req, res) => {
 
     const userId = req.user ? parseInt(req.user.id, 10) : null
 
-    // Main SQL query with SQL aggregation for average rating & total rating count
     const dataQuery = `
       SELECT 
         s.id,
@@ -107,6 +99,7 @@ export const getStores = async (req, res) => {
         u.name AS owner_name,
         u.email AS owner_email,
         COALESCE(ROUND(AVG(r.rating), 2), 0) AS average_rating,
+        COALESCE(ROUND(AVG(r.rating), 2), 0) AS overall_rating,
         COUNT(r.id) AS total_ratings,
         ${userId ? '(SELECT rating FROM ratings WHERE store_id = s.id AND user_id = ' + userId + ' LIMIT 1)' : 'NULL'} AS user_rating
       FROM stores s
@@ -140,10 +133,6 @@ export const getStores = async (req, res) => {
   }
 }
 
-/**
- * GET /api/stores/:id
- * Get single store by ID with average rating and total ratings.
- */
 export const getStoreById = async (req, res) => {
   try {
     const storeId = parseInt(req.params.id, 10)
@@ -166,6 +155,7 @@ export const getStoreById = async (req, res) => {
         u.name AS owner_name,
         u.email AS owner_email,
         COALESCE(ROUND(AVG(r.rating), 2), 0) AS average_rating,
+        COALESCE(ROUND(AVG(r.rating), 2), 0) AS overall_rating,
         COUNT(r.id) AS total_ratings
       FROM stores s
       LEFT JOIN users u ON s.owner_id = u.id
@@ -196,15 +186,10 @@ export const getStoreById = async (req, res) => {
   }
 }
 
-/**
- * POST /api/stores
- * Create a new store (ADMIN only).
- */
 export const createStore = async (req, res) => {
   try {
     const { name, email, address, owner_id } = req.body
 
-    // Basic type & presence checks
     if (typeof name !== 'string' || typeof email !== 'string' || typeof address !== 'string') {
       return res.status(400).json({
         success: false,
@@ -236,35 +221,39 @@ export const createStore = async (req, res) => {
       })
     }
 
-    const parsedOwnerId = parseInt(owner_id, 10)
-    if (isNaN(parsedOwnerId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid owner_id is required.',
-      })
+    let parsedOwnerId = null
+    let ownerName = null
+    if (owner_id !== undefined && owner_id !== null && owner_id !== '') {
+      parsedOwnerId = parseInt(owner_id, 10)
+      if (isNaN(parsedOwnerId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid owner_id format.',
+        })
+      }
+
+      const [owners] = await pool.query(
+        'SELECT id, name, email, role FROM users WHERE id = ?',
+        [parsedOwnerId]
+      )
+
+      if (owners.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'The specified owner user does not exist.',
+        })
+      }
+
+      if (owners[0].role !== 'STORE_OWNER') {
+        return res.status(400).json({
+          success: false,
+          message: 'Stores can only be assigned to users with the STORE_OWNER role.',
+        })
+      }
+
+      ownerName = owners[0].name
     }
 
-    // Verify owner user exists AND has STORE_OWNER role
-    const [owners] = await pool.query(
-      'SELECT id, name, email, role FROM users WHERE id = ?',
-      [parsedOwnerId]
-    )
-
-    if (owners.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'The specified owner user does not exist.',
-      })
-    }
-
-    if (owners[0].role !== 'STORE_OWNER') {
-      return res.status(400).json({
-        success: false,
-        message: 'Stores can only be assigned to users with the STORE_OWNER role.',
-      })
-    }
-
-    // Check store email uniqueness
     const [existingStore] = await pool.query('SELECT id FROM stores WHERE email = ?', [cleanEmail])
     if (existingStore.length > 0) {
       return res.status(409).json({
@@ -273,7 +262,6 @@ export const createStore = async (req, res) => {
       })
     }
 
-    // Insert store into database
     const [result] = await pool.query(
       'INSERT INTO stores (name, email, address, owner_id) VALUES (?, ?, ?, ?)',
       [trimmedName, cleanEmail, trimmedAddress, parsedOwnerId]
@@ -288,7 +276,7 @@ export const createStore = async (req, res) => {
         email: cleanEmail,
         address: trimmedAddress,
         owner_id: parsedOwnerId,
-        owner_name: owners[0].name,
+        owner_name: ownerName,
       },
     })
   } catch (error) {
@@ -300,10 +288,6 @@ export const createStore = async (req, res) => {
   }
 }
 
-/**
- * PUT /api/stores/:id
- * Update store details (ADMIN or assigned STORE_OWNER).
- */
 export const updateStore = async (req, res) => {
   try {
     const storeId = parseInt(req.params.id, 10)
@@ -314,7 +298,6 @@ export const updateStore = async (req, res) => {
       })
     }
 
-    // Check store existence
     const [existingStores] = await pool.query('SELECT * FROM stores WHERE id = ?', [storeId])
     if (existingStores.length === 0) {
       return res.status(404).json({
@@ -339,7 +322,6 @@ export const updateStore = async (req, res) => {
     let updateFields = []
     let queryParams = []
 
-    // Store Name
     if (name !== undefined) {
       if (typeof name !== 'string' || name.trim().length < 1 || name.trim().length > 60) {
         return res.status(400).json({
@@ -351,7 +333,6 @@ export const updateStore = async (req, res) => {
       queryParams.push(name.trim())
     }
 
-    // Store Email
     if (email !== undefined) {
       if (typeof email !== 'string' || !validateEmail(email.trim())) {
         return res.status(400).json({
@@ -360,7 +341,6 @@ export const updateStore = async (req, res) => {
         })
       }
       const cleanEmail = email.trim().toLowerCase()
-      // Check duplicate store email
       const [emailCheck] = await pool.query('SELECT id FROM stores WHERE email = ? AND id != ?', [cleanEmail, storeId])
       if (emailCheck.length > 0) {
         return res.status(409).json({
@@ -372,7 +352,6 @@ export const updateStore = async (req, res) => {
       queryParams.push(cleanEmail)
     }
 
-    // Store Address
     if (address !== undefined) {
       if (typeof address !== 'string' || address.trim().length < 1 || address.trim().length > 400) {
         return res.status(400).json({
@@ -384,7 +363,6 @@ export const updateStore = async (req, res) => {
       queryParams.push(address.trim())
     }
 
-    // Store Owner ID (ADMIN only)
     if (owner_id !== undefined) {
       if (!isAdmin) {
         return res.status(403).json({
@@ -393,31 +371,34 @@ export const updateStore = async (req, res) => {
         })
       }
 
-      const parsedOwnerId = parseInt(owner_id, 10)
-      if (isNaN(parsedOwnerId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid owner_id format.',
-        })
-      }
+      let parsedOwnerId = null
+      if (owner_id !== null && owner_id !== '') {
+        parsedOwnerId = parseInt(owner_id, 10)
+        if (isNaN(parsedOwnerId)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid owner_id format.',
+          })
+        }
 
-      const [owners] = await pool.query(
-        'SELECT id, role FROM users WHERE id = ?',
-        [parsedOwnerId]
-      )
+        const [owners] = await pool.query(
+          'SELECT id, role FROM users WHERE id = ?',
+          [parsedOwnerId]
+        )
 
-      if (owners.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'The specified owner user does not exist.',
-        })
-      }
+        if (owners.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'The specified owner user does not exist.',
+          })
+        }
 
-      if (owners[0].role !== 'STORE_OWNER') {
-        return res.status(400).json({
-          success: false,
-          message: 'Stores can only be assigned to users with the STORE_OWNER role.',
-        })
+        if (owners[0].role !== 'STORE_OWNER') {
+          return res.status(400).json({
+            success: false,
+            message: 'Stores can only be assigned to users with the STORE_OWNER role.',
+          })
+        }
       }
 
       updateFields.push('owner_id = ?')
@@ -438,7 +419,6 @@ export const updateStore = async (req, res) => {
       queryParams
     )
 
-    // Fetch updated store with details
     const getUpdatedQuery = `
       SELECT 
         s.id,
@@ -451,6 +431,7 @@ export const updateStore = async (req, res) => {
         u.name AS owner_name,
         u.email AS owner_email,
         COALESCE(ROUND(AVG(r.rating), 2), 0) AS average_rating,
+        COALESCE(ROUND(AVG(r.rating), 2), 0) AS overall_rating,
         COUNT(r.id) AS total_ratings
       FROM stores s
       LEFT JOIN users u ON s.owner_id = u.id
@@ -475,10 +456,6 @@ export const updateStore = async (req, res) => {
   }
 }
 
-/**
- * DELETE /api/stores/:id
- * Delete a store (ADMIN only).
- */
 export const deleteStore = async (req, res) => {
   try {
     const storeId = parseInt(req.params.id, 10)
