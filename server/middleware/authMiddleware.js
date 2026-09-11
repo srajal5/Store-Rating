@@ -7,7 +7,7 @@ import { requireRole } from './roleMiddleware.js'
  */
 export const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null
 
   if (!token) {
     return res.status(401).json({
@@ -16,12 +16,20 @@ export const authenticateToken = (req, res, next) => {
     })
   }
 
+  const jwtSecret = process.env.JWT_SECRET
+  if (!jwtSecret) {
+    console.error('Server Configuration Error: JWT_SECRET environment variable is missing.')
+    return res.status(500).json({
+      success: false,
+      message: 'Authentication service temporarily unavailable.',
+    })
+  }
+
   try {
-    const jwtSecret = process.env.JWT_SECRET
-    if (!jwtSecret) {
-      throw new Error('JWT_SECRET is not configured on server.')
-    }
-    const decoded = jwt.verify(token, jwtSecret)
+    // Strictly restrict allowed algorithms to HS256 to prevent algorithm confusion/downgrade
+    const decoded = jwt.verify(token, jwtSecret, {
+      algorithms: ['HS256'],
+    })
     req.user = decoded
     next()
   } catch (error) {
