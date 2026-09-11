@@ -1,5 +1,7 @@
 import { getToken } from './authService'
 
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+
 const getHeaders = () => {
   const token = getToken()
   return {
@@ -12,7 +14,7 @@ const getHeaders = () => {
  * Get dashboard overview data for authenticated STORE_OWNER
  */
 export const getOwnerDashboard = async () => {
-  const response = await fetch('/api/owner/dashboard', {
+  const response = await fetch(`${API_BASE}/owner/dashboard`, {
     method: 'GET',
     headers: getHeaders(),
   })
@@ -37,7 +39,8 @@ export const getOwnerRatings = async (params = {}) => {
   if (params.page) query.append('page', params.page)
   if (params.limit) query.append('limit', params.limit)
 
-  const response = await fetch(`/api/owner/ratings?${query.toString()}`, {
+  const queryString = query.toString() ? `?${query.toString()}` : ''
+  const response = await fetch(`${API_BASE}/owner/ratings${queryString}`, {
     method: 'GET',
     headers: getHeaders(),
   })

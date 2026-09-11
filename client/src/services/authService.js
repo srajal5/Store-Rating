@@ -1,4 +1,5 @@
 const TOKEN_KEY = 'store_rating_jwt'
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY)
 export const setToken = (token) => localStorage.setItem(TOKEN_KEY, token)
@@ -10,7 +11,7 @@ export const removeToken = () => localStorage.removeItem(TOKEN_KEY)
  * @param {string} password
  */
 export const login = async (email, password) => {
-  const response = await fetch('/api/auth/login', {
+  const response = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -36,7 +37,7 @@ export const login = async (email, password) => {
  * @param {Object} userData - { name, email, password, address }
  */
 export const register = async (userData) => {
-  const response = await fetch('/api/auth/register', {
+  const response = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -67,7 +68,7 @@ export const getCurrentUser = async () => {
     return null
   }
 
-  const response = await fetch('/api/auth/me', {
+  const response = await fetch(`${API_BASE}/auth/me`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -94,7 +95,7 @@ export const changePassword = async (oldPassword, newPassword) => {
     throw new Error('Not authenticated')
   }
 
-  const response = await fetch('/api/auth/change-password', {
+  const response = await fetch(`${API_BASE}/auth/change-password`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

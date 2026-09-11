@@ -138,8 +138,7 @@ export const register = async (req, res) => {
     console.error('Registration error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error during registration.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error during registration.' : (error.message || 'Server error during registration.'),
     })
   }
 }
@@ -213,8 +212,7 @@ export const login = async (req, res) => {
     console.error('Login error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error during login.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error during login.' : (error.message || 'Server error during login.'),
     })
   }
 }
@@ -247,8 +245,7 @@ export const getMe = async (req, res) => {
     console.error('Get me error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving user details.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving user details.' : (error.message || 'Server error retrieving user details.'),
     })
   }
 }
@@ -320,8 +317,7 @@ export const changePassword = async (req, res) => {
     console.error('Change password error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error updating password.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error updating password.' : (error.message || 'Server error updating password.'),
     })
   }
 }

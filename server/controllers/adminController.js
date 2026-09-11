@@ -40,8 +40,7 @@ export const getDashboardStats = async (req, res) => {
     console.error('Get admin dashboard stats error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving dashboard statistics.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving dashboard statistics.' : (error.message || 'Server error retrieving dashboard statistics.'),
     })
   }
 }
@@ -144,8 +143,7 @@ export const getAdminUsers = async (req, res) => {
     console.error('Get admin users error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving users for admin.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving users for admin.' : (error.message || 'Server error retrieving users for admin.'),
     })
   }
 }
@@ -267,8 +265,7 @@ export const getAdminStores = async (req, res) => {
     console.error('Get admin stores error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving stores for admin.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving stores for admin.' : (error.message || 'Server error retrieving stores for admin.'),
     })
   }
 }
@@ -388,8 +385,7 @@ export const getAdminRatings = async (req, res) => {
     console.error('Get admin ratings error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving ratings for admin.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving ratings for admin.' : (error.message || 'Server error retrieving ratings for admin.'),
     })
   }
 }

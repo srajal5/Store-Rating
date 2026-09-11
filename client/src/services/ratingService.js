@@ -1,5 +1,7 @@
 import { getToken } from './authService'
 
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+
 const getHeaders = () => {
   const token = getToken()
   return {
@@ -14,7 +16,7 @@ const getHeaders = () => {
  * @param {number} rating (1-5)
  */
 export const submitRating = async (store_id, rating) => {
-  const response = await fetch('/api/ratings', {
+  const response = await fetch(`${API_BASE}/ratings`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({ store_id, rating }),
@@ -33,7 +35,7 @@ export const submitRating = async (store_id, rating) => {
  * @param {number} rating (1-5)
  */
 export const updateRating = async (rating_id, rating) => {
-  const response = await fetch(`/api/ratings/${rating_id}`, {
+  const response = await fetch(`${API_BASE}/ratings/${rating_id}`, {
     method: 'PUT',
     headers: getHeaders(),
     body: JSON.stringify({ rating }),
@@ -51,7 +53,7 @@ export const updateRating = async (rating_id, rating) => {
  * @param {number} rating_id
  */
 export const deleteRating = async (rating_id) => {
-  const response = await fetch(`/api/ratings/${rating_id}`, {
+  const response = await fetch(`${API_BASE}/ratings/${rating_id}`, {
     method: 'DELETE',
     headers: getHeaders(),
   })
@@ -68,7 +70,7 @@ export const deleteRating = async (rating_id) => {
  * @param {number} storeId
  */
 export const getStoreRatings = async (storeId) => {
-  const response = await fetch(`/api/ratings/${storeId}`, {
+  const response = await fetch(`${API_BASE}/ratings/${storeId}`, {
     method: 'GET',
     headers: getHeaders(),
   })

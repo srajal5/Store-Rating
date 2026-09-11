@@ -1,5 +1,7 @@
 import { getToken } from './authService'
 
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+
 const getHeaders = () => {
   const token = getToken()
   return {
@@ -20,7 +22,8 @@ export const getStores = async (params = {}) => {
   if (params.page) query.append('page', params.page)
   if (params.limit) query.append('limit', params.limit)
 
-  const response = await fetch(`/api/stores?${query.toString()}`, {
+  const queryString = query.toString() ? `?${query.toString()}` : ''
+  const response = await fetch(`${API_BASE}/stores${queryString}`, {
     method: 'GET',
     headers: getHeaders(),
   })
@@ -36,7 +39,7 @@ export const getStores = async (params = {}) => {
  * Get store details by ID
  */
 export const getStoreById = async (id) => {
-  const response = await fetch(`/api/stores/${id}`, {
+  const response = await fetch(`${API_BASE}/stores/${id}`, {
     method: 'GET',
     headers: getHeaders(),
   })

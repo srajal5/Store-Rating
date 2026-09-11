@@ -3,8 +3,8 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-// Create MySQL connection pool
-const pool = mysql.createPool({
+// Configure MySQL connection pool options
+const poolConfig = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
@@ -13,6 +13,18 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-})
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+}
+
+// Enable SSL if explicitly requested or if connecting to AWS RDS in production
+if (process.env.DB_SSL === 'true') {
+  poolConfig.ssl = {
+    rejectUnauthorized: false,
+  }
+}
+
+// Create MySQL connection pool
+const pool = mysql.createPool(poolConfig)
 
 export default pool

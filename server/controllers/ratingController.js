@@ -71,8 +71,7 @@ export const createRating = async (req, res) => {
     console.error('Create rating error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error submitting rating.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error submitting rating.' : (error.message || 'Server error submitting rating.'),
     })
   }
 }
@@ -151,8 +150,7 @@ export const getStoreRatings = async (req, res) => {
     console.error('Get store ratings error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving store ratings.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving store ratings.' : (error.message || 'Server error retrieving store ratings.'),
     })
   }
 }
@@ -214,8 +212,7 @@ export const updateRating = async (req, res) => {
     console.error('Update rating error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error updating rating.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error updating rating.' : (error.message || 'Server error updating rating.'),
     })
   }
 }
@@ -265,8 +262,7 @@ export const deleteRating = async (req, res) => {
     console.error('Delete rating error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error deleting rating.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error deleting rating.' : (error.message || 'Server error deleting rating.'),
     })
   }
 }

@@ -1,0 +1,21 @@
+{
+  "name": "store-rating-system",
+  "version": "1.0.0",
+  "description": "Full-stack Store Rating System deployed as unified Vercel project",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm run build --prefix client",
+    "client:dev": "npm run dev --prefix client",
+    "server:dev": "node --watch server/server.js",
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.23.3"
+  }
+}

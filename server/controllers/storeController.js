@@ -92,7 +92,7 @@ export const getStores = async (req, res) => {
     const total = countRows[0].total
     const totalPages = Math.ceil(total / limitNum) || 1
 
-    const userId = req.user ? req.user.id : null
+    const userId = req.user ? parseInt(req.user.id, 10) : null
 
     // Main SQL query with SQL aggregation for average rating & total rating count
     const dataQuery = `
@@ -108,7 +108,7 @@ export const getStores = async (req, res) => {
         u.email AS owner_email,
         COALESCE(ROUND(AVG(r.rating), 2), 0) AS average_rating,
         COUNT(r.id) AS total_ratings,
-        ${userId ? '(SELECT rating FROM ratings WHERE store_id = s.id AND user_id = ' + pool.escape(userId) + ' LIMIT 1)' : 'NULL'} AS user_rating
+        ${userId ? '(SELECT rating FROM ratings WHERE store_id = s.id AND user_id = ' + userId + ' LIMIT 1)' : 'NULL'} AS user_rating
       FROM stores s
       LEFT JOIN users u ON s.owner_id = u.id
       LEFT JOIN ratings r ON s.id = r.store_id
@@ -135,8 +135,7 @@ export const getStores = async (req, res) => {
     console.error('Get stores error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving stores.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving stores.' : (error.message || 'Server error retrieving stores.'),
     })
   }
 }
@@ -192,8 +191,7 @@ export const getStoreById = async (req, res) => {
     console.error('Get store by ID error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving store details.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving store details.' : (error.message || 'Server error retrieving store details.'),
     })
   }
 }
@@ -297,8 +295,7 @@ export const createStore = async (req, res) => {
     console.error('Create store error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error creating store.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error creating store.' : (error.message || 'Server error creating store.'),
     })
   }
 }
@@ -473,8 +470,7 @@ export const updateStore = async (req, res) => {
     console.error('Update store error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error updating store.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error updating store.' : (error.message || 'Server error updating store.'),
     })
   }
 }
@@ -511,8 +507,7 @@ export const deleteStore = async (req, res) => {
     console.error('Delete store error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error deleting store.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error deleting store.' : (error.message || 'Server error deleting store.'),
     })
   }
 }

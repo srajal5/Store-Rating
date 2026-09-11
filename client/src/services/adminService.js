@@ -1,5 +1,7 @@
 import { getToken } from './authService'
 
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+
 const getHeaders = () => {
   const token = getToken()
   return {
@@ -12,7 +14,7 @@ const getHeaders = () => {
  * Get dashboard stats for admin
  */
 export const getAdminDashboardStats = async () => {
-  const response = await fetch('/api/admin/dashboard', {
+  const response = await fetch(`${API_BASE}/admin/dashboard`, {
     method: 'GET',
     headers: getHeaders(),
   })
@@ -37,7 +39,8 @@ export const getAdminUsers = async (params = {}) => {
   if (params.page) query.append('page', params.page)
   if (params.limit) query.append('limit', params.limit)
 
-  const response = await fetch(`/api/admin/users?${query.toString()}`, {
+  const queryString = query.toString() ? `?${query.toString()}` : ''
+  const response = await fetch(`${API_BASE}/admin/users${queryString}`, {
     method: 'GET',
     headers: getHeaders(),
   })
@@ -61,7 +64,8 @@ export const getAdminStores = async (params = {}) => {
   if (params.page) query.append('page', params.page)
   if (params.limit) query.append('limit', params.limit)
 
-  const response = await fetch(`/api/admin/stores?${query.toString()}`, {
+  const queryString = query.toString() ? `?${query.toString()}` : ''
+  const response = await fetch(`${API_BASE}/admin/stores${queryString}`, {
     method: 'GET',
     headers: getHeaders(),
   })

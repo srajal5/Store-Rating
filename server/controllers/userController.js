@@ -121,8 +121,7 @@ export const getUsers = async (req, res) => {
     console.error('Get users error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving users.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving users.' : (error.message || 'Server error retrieving users.'),
     })
   }
 }
@@ -169,8 +168,7 @@ export const getUserById = async (req, res) => {
     console.error('Get user by ID error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving user details.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving user details.' : (error.message || 'Server error retrieving user details.'),
     })
   }
 }
@@ -265,8 +263,7 @@ export const createUser = async (req, res) => {
     console.error('Create user error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error creating user.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error creating user.' : (error.message || 'Server error creating user.'),
     })
   }
 }
@@ -418,8 +415,7 @@ export const updateUser = async (req, res) => {
     console.error('Update user error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error updating user.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error updating user.' : (error.message || 'Server error updating user.'),
     })
   }
 }
@@ -464,8 +460,7 @@ export const deleteUser = async (req, res) => {
     console.error('Delete user error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error deleting user.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error deleting user.' : (error.message || 'Server error deleting user.'),
     })
   }
 }

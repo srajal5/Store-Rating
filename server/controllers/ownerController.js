@@ -89,8 +89,7 @@ export const getOwnerDashboard = async (req, res) => {
     console.error('Get store owner dashboard error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving store owner dashboard.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving store owner dashboard.' : (error.message || 'Server error retrieving store owner dashboard.'),
     })
   }
 }
@@ -209,8 +208,7 @@ export const getOwnerRatings = async (req, res) => {
     console.error('Get store owner ratings error:', error)
     res.status(500).json({
       success: false,
-      message: 'Server error retrieving store ratings.',
-      error: error.message,
+      message: process.env.NODE_ENV === 'production' ? 'Server error retrieving store ratings.' : (error.message || 'Server error retrieving store ratings.'),
     })
   }
 }

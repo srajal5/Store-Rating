@@ -7,6 +7,7 @@ dist/
 **/dist/
 build/
 **/build/
+.vercel/
 
 # Environment files & secrets
 .env
@@ -17,6 +18,13 @@ build/
 **/.env.local
 **/.env.*
 !**/.env.example
+
+# Certificates, Backups & Credentials
+*.pem
+global-bundle.pem
+*.sql
+*.sql.gz
+store_rating_db_backup.sql
 
 # Logs
 *.log
