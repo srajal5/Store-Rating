@@ -1,4 +1,4 @@
-# Store Rating System 🌟
+# Store Rating System 
 
 A modern, full-stack, production-ready Web Application built with **React 19**, **Tailwind CSS**, **Node.js / Express 5**, and **AWS RDS MySQL**. The platform features Role-Based Access Control (RBAC), server-side search, filtering, sorting, pagination, interactive star ratings, dynamic average rating calculation, and a sleek SaaS user interface.
 
@@ -6,7 +6,7 @@ The application is architected for **single-project Vercel deployment**, serving
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Project Description](#-project-description)
 2. [Complete Application Flow](#-complete-application-flow)
@@ -27,7 +27,7 @@ The application is architected for **single-project Vercel deployment**, serving
 
 ---
 
-## 📝 Project Description
+##  Project Description
 
 The **Store Rating System** is an enterprise-grade platform that connects consumers, store owners, and platform administrators:
 
@@ -37,7 +37,7 @@ The **Store Rating System** is an enterprise-grade platform that connects consum
 
 ---
 
-## 🔄 Complete Application Flow
+##  Complete Application Flow
 
 ### 1. Visitor & Normal User Flow
 
@@ -170,21 +170,21 @@ Instant Store Average Update
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-- 🔐 **Secure JWT Authentication**: Stateless authentication with bcrypt password hashing (10 salt rounds) and HS256 JWT signing.
-- 🛡️ **Role-Based Access Control (RBAC)**: Strict server-side and client-side protection for `ADMIN`, `STORE_OWNER`, and `USER` roles.
-- ⚡ **Server-Side Search, Filter, Sort & Pagination**: SQL-driven query handling using `URLSearchParams` for high performance.
-- ⭐ **Interactive Star Rating Interface**: Users can submit or modify 1–5 star ratings with instant feedback.
-- 🚫 **Duplicate Rating Prevention**: Enforced via MySQL `UNIQUE(user_id, store_id)` constraints with seamless upsert support.
-- 📊 **Dynamic Rating Aggregation**: Server-calculated `ROUND(AVG(rating), 2)` and total count metrics.
-- 🎨 **Modern SaaS UI**: Dark/Light theme built with Tailwind CSS, custom glassmorphism, responsive tables, and micro-animations.
-- 🔒 **Production Security Hardening**: Parameterized SQL queries against SQL injection, non-leaking production error handlers, CORS whitelisting, and secure token handling.
-- ☁️ **Single-Project Vercel Deployment**: Unified monorepo deployment with client SPA static build and serverless Express API.
+-  **Secure JWT Authentication**: Stateless authentication with bcrypt password hashing (10 salt rounds) and HS256 JWT signing.
+-  **Role-Based Access Control (RBAC)**: Strict server-side and client-side protection for `ADMIN`, `STORE_OWNER`, and `USER` roles.
+-  **Server-Side Search, Filter, Sort & Pagination**: SQL-driven query handling using `URLSearchParams` for high performance.
+-  **Interactive Star Rating Interface**: Users can submit or modify 1–5 star ratings with instant feedback.
+-  **Duplicate Rating Prevention**: Enforced via MySQL `UNIQUE(user_id, store_id)` constraints with seamless upsert support.
+-  **Dynamic Rating Aggregation**: Server-calculated `ROUND(AVG(rating), 2)` and total count metrics.
+-  **Modern SaaS UI**: Dark/Light theme built with Tailwind CSS, custom glassmorphism, responsive tables, and micro-animations.
+-  **Production Security Hardening**: Parameterized SQL queries against SQL injection, non-leaking production error handlers, CORS whitelisting, and secure token handling.
+-  **Single-Project Vercel Deployment**: Unified monorepo deployment with client SPA static build and serverless Express API.
 
 ---
 
-## 👥 User Roles & Permissions
+##  User Roles & Permissions
 
 The application uses **one single authentication system** for all three roles. The backend determines the user's role upon login and the frontend directs the user to their designated dashboard.
 
@@ -196,7 +196,7 @@ The application uses **one single authentication system** for all three roles. T
 
 ---
 
-## ✅ Assessment Validation Rules
+##  Assessment Validation Rules
 
 The following rules are strictly enforced across both client and server:
 
@@ -211,7 +211,7 @@ The following rules are strictly enforced across both client and server:
 
 ---
 
-## 💻 Technology Stack
+##  Technology Stack
 
 ### Frontend
 - **Framework**: React 19 SPA
@@ -232,7 +232,7 @@ The following rules are strictly enforced across both client and server:
 
 ---
 
-## 🏗️ Project Architecture
+##  Project Architecture
 
 ```
 store-rating-system/
@@ -267,7 +267,7 @@ store-rating-system/
 
 ---
 
-## 🗄️ Database Design
+##  Database Design
 
 ```mermaid
 erDiagram
@@ -308,7 +308,7 @@ erDiagram
 
 ---
 
-## 🔌 API Endpoints
+##  API Endpoints
 
 ### System & Health
 - `GET /api/health` — Basic server liveness check
@@ -345,7 +345,7 @@ erDiagram
 
 ---
 
-## ⚙️ Local Development Setup
+##  Local Development Setup
 
 ### 1. Prerequisites
 - **Node.js**: v18.0.0 or higher (Node 20+ recommended)
@@ -399,7 +399,7 @@ npm run client:dev
 
 ---
 
-## 🚀 Production Deployment on Vercel
+##  Production Deployment on Vercel
 
 The repository is configured for a **single unified Vercel project** via `vercel.json` and `api/index.js`.
 
@@ -444,7 +444,7 @@ The repository is configured for a **single unified Vercel project** via `vercel
 
 ---
 
-## 🌐 AWS RDS Networking & Security
+##  AWS RDS Networking & Security
 
 > [!IMPORTANT]
 > **RDS Security Group Configuration**:
@@ -462,7 +462,7 @@ The repository is configured for a **single unified Vercel project** via `vercel
 
 ---
 
-## 🩺 Health Checks & Verification
+##  Health Checks & Verification
 
 You can monitor and verify connectivity at any time:
 
@@ -496,7 +496,7 @@ You can monitor and verify connectivity at any time:
 
 
 
-## 👤 Demo Credentials
+##  Demo Credentials
 
 The database seed script provides test accounts for immediate evaluation (all default passwords: `Password123!`):
 
@@ -510,6 +510,6 @@ The database seed script provides test accounts for immediate evaluation (all de
 
 ---
 
-## 📜 License
+##  License
 
 This project is open-source and licensed under the [ISC License](LICENSE).
